@@ -9,17 +9,17 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // 🔴 DÁN CONFIG FIREBASE CỦA BẠN VÀO ĐÂY
-   const firebaseConfig = {
-  apiKey: "AIzaSyC3XhrQxSvaU8kxIula9sGVa0A50XRlnko",
-  authDomain: "phoneasync.firebaseapp.com",
-  databaseURL: "https://phoneasync-default-rtdb.firebaseio.com",
-  projectId: "phoneasync",
-  storageBucket: "phoneasync.firebasestorage.app",
-  messagingSenderId: "450537079799",
-  appId: "1:450537079799:web:897edf9a9db992a182a4f2",
-  measurementId: "G-D08VYVJ3EE"
-};
+    // 🔴 FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyC3XhrQxSvaU8kxIula9sGVa0A50XRlnko",
+      authDomain: "phoneasync.firebaseapp.com",
+      databaseURL: "https://phoneasync-default-rtdb.firebaseio.com",
+      projectId: "phoneasync",
+      storageBucket: "phoneasync.firebasestorage.app",
+      messagingSenderId: "450537079799",
+      appId: "1:450537079799:web:897edf9a9db992a182a4f2",
+      measurementId: "G-D08VYVJ3EE"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -39,9 +39,29 @@
       const phone = snapshot.val();
       const el = document.getElementById("phone");
       if (phone) {
-        el.href = `tel:${phone}`;
+        el.dataset.phone = phone;
         el.innerText = phone;
+      } else {
+        el.dataset.phone = "";
+        el.innerText = "Chưa có";
       }
+    });
+
+    // ONE TAP CALL VIA SHORTCUT
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("directCallBtn");
+      const phoneEl = document.getElementById("phone");
+
+      btn.addEventListener("click", () => {
+        const phone = phoneEl.dataset.phone;
+        if (!phone) return;
+
+        const encoded = encodeURIComponent(phone);
+
+        // Gọi iOS Shortcut + truyền số
+        window.location.href =
+          `shortcuts://run-shortcut?name=Firebase%20Direct%20Call&input=${encoded}`;
+      });
     });
   </script>
 
@@ -66,16 +86,28 @@
       max-width: 400px;
     }
 
-    a {
+    #phone {
       display: block;
       margin-top: 16px;
       padding: 16px;
       background: #22c55e;
       color: black;
-      text-decoration: none;
       border-radius: 12px;
       font-size: 20px;
       font-weight: 600;
+    }
+
+    #directCallBtn {
+      display: block;
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(90deg,#22c55e,#4ade80);
+      color: #020617;
     }
   </style>
 </head>
@@ -83,9 +115,14 @@
 <body>
   <div class="card">
     <h3>Số điện thoại hiện tại</h3>
-    <a id="phone">Chưa có</a>
+
+    <div id="phone" data-phone="">Chưa có</div>
+
+    <!-- 1 NÚT DUY NHẤT -->
+    <a id="directCallBtn">⚡ ONE TAP CALL</a>
+
     <p style="opacity:.6;font-size:12px;margin-top:12px">
-      PC: Ctrl + V • Phone: Tap để gọi
+      PC: Ctrl + V • iPhone: ONE TAP CALL
     </p>
   </div>
 </body>
