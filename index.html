@@ -9,7 +9,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // 🔴 FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyC3XhrQxSvaU8kxIula9sGVa0A50XRlnko",
       authDomain: "phoneasync.firebaseapp.com",
@@ -25,9 +24,7 @@
     const db = getDatabase(app);
     const phoneRef = ref(db, "phone");
 
-    // =========================
-    // PC: Ctrl + V gửi số
-    // =========================
+    // PC paste
     window.addEventListener("paste", (e) => {
       const text = (e.clipboardData || window.clipboardData).getData("text");
       const phone = text.replace(/\D/g, "");
@@ -36,44 +33,45 @@
       }
     });
 
-    // =========================
-    // Phone: nhận realtime (KHÔNG set tel:)
-    // =========================
-    const phoneEl = () => document.getElementById("phone");
+    let armed = false;
 
     onValue(phoneRef, (snapshot) => {
       const phone = snapshot.val();
-      const el = phoneEl();
+      const phoneEl = document.getElementById("phone");
+      const statusEl = document.getElementById("status");
+
       if (phone) {
-        el.dataset.phone = phone;   // chỉ lưu số
-        el.innerText = phone;
-      } else {
-        el.dataset.phone = "";
-        el.innerText = "Chưa có";
+        phoneEl.innerText = phone;
+        phoneEl.dataset.phone = phone;
+        statusEl.innerText = armed 
+          ? "READY TO CALL" 
+          : "NEW NUMBER RECEIVED";
       }
     });
 
-    // =========================
-    // Phone: Tap để gọi (Safari-safe)
-    // =========================
-    let calling = false;
-
     document.addEventListener("DOMContentLoaded", () => {
-      const el = phoneEl();
+      const armBtn = document.getElementById("armBtn");
+      const callBtn = document.getElementById("callBtn");
+      const phoneEl = document.getElementById("phone");
+      const statusEl = document.getElementById("status");
 
-      el.addEventListener("click", () => {
-        if (calling) return;
+      armBtn.addEventListener("click", () => {
+        armed = true;
+        statusEl.innerText = "CALL ARMED — TAP CALL";
+      });
 
-        const phone = el.dataset.phone;
+      callBtn.addEventListener("click", () => {
+        if (!armed) {
+          statusEl.innerText = "PLEASE ARM FIRST";
+          return;
+        }
+
+        const phone = phoneEl.dataset.phone;
         if (!phone) return;
 
-        calling = true;
-
-        // QUAN TRỌNG: tel: chỉ trong click
+        // tel: trong user intent rõ ràng (2nd click)
         window.location.href = `tel:${phone}`;
-
-        // reset sau 3s để tránh double tap
-        setTimeout(() => calling = false, 3000);
+        armed = false;
       });
     });
   </script>
@@ -82,48 +80,72 @@
     body {
       margin: 0;
       height: 100vh;
+      background: #020617;
       display: flex;
       justify-content: center;
       align-items: center;
       font-family: system-ui, sans-serif;
-      background: #0f172a;
       color: white;
     }
 
     .card {
       background: #020617;
+      border: 1px solid rgba(34,197,94,.2);
       padding: 24px;
       border-radius: 16px;
-      text-align: center;
       width: 90%;
-      max-width: 400px;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(34,197,94,.15);
+    }
+
+    #status {
+      font-size: 12px;
+      opacity: .6;
+      margin-bottom: 12px;
     }
 
     #phone {
-      display: block;
-      margin-top: 16px;
-      padding: 16px;
-      background: #22c55e;
-      color: black;
-      text-decoration: none;
+      font-size: 28px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
       border-radius: 12px;
-      font-size: 20px;
-      font-weight: 600;
+      border: none;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
-      user-select: none;
+    }
+
+    #armBtn {
+      background: #334155;
+      color: white;
+    }
+
+    #callBtn {
+      background: linear-gradient(90deg,#22c55e,#4ade80);
+      color: #020617;
     }
   </style>
 </head>
 
 <body>
   <div class="card">
-    <h3>Số điện thoại hiện tại</h3>
+    <div id="status">WAITING FOR NUMBER</div>
+    <div id="phone">----</div>
 
-    <!-- KHÔNG có href tel ở đây -->
-    <a id="phone" data-phone="">Chưa có</a>
+    <button id="armBtn">🔓 ARM CALL</button>
+    <button id="callBtn">📞 CALL NOW</button>
 
-    <p style="opacity:.6;font-size:12px;margin-top:12px">
-      PC: Ctrl + V • Phone: Tap để gọi
+    <p style="opacity:.4;font-size:11px;margin-top:12px">
+      Safari iOS requires explicit user intent
     </p>
   </div>
 </body>
